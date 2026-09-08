@@ -1,5 +1,4 @@
 aca_source_images:
-  manifest: data/aca_image_sources.csv
   original_url_or_collection_url: http://vision.ia.ac.cn/data/
   access_contact: wgao@nlpr.ia.ac.cn
   terms_url: http://vision.ia.ac.cn/data/

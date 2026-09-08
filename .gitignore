@@ -10,8 +10,7 @@ data/ACA/
 *.npy
 *.log
 precomputed/
-outputs/*
-!outputs/.gitkeep
+outputs/
 staging/
 tmp/
 GitHub_Release/
