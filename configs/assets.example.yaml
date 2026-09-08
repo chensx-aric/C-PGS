@@ -1,0 +1,30 @@
+aca_source_images:
+  manifest: data/aca_image_sources.csv
+  original_url_or_collection_url: http://vision.ia.ac.cn/data/
+  access_contact: wgao@nlpr.ia.ac.cn
+  terms_url: http://vision.ia.ac.cn/data/
+  redistribution_status: not_redistributed_by_this_repository
+  destination: data/ACA
+
+aca_author_annotations:
+  distribution: confidential_grsi_review_only
+  note: Author-created labels are not publicly hosted in this source-only repository.
+  destination: data/ACA
+
+sam2_checkpoint:
+  downloader: third_party/sam2/download_ckpts.sh
+  filename: checkpoints/sam2.1_hiera_large.pt
+
+cpgs_representative_checkpoint:
+  experiment: unimatch_v2_style_prior
+  label_ratio: "1/2"
+  distribution: supplied_separately
+  note: Not hosted in this source-only GitHub repository.
+  state_dict_key: model_ema
+  checkpoint_epoch: 71
+  expected_sp_miou: 64.48
+  verified_sp_miou: 64.48
+  expected_sp_ip_miou: 65.16
+  verified_sp_ip_miou: 65.16
+  sha256: 347db73172344905182250feef1dddd5bd506bb516b8fdc716274425a88741fc
+  destination: checkpoints/unimatch_v2_sp_aca_1_2_best.pth

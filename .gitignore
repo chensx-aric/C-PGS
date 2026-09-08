@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+checkpoints/
+data/ACA/
+*.pth
+*.pt
+*.ckpt
+*.npy
+*.log
+precomputed/
+outputs/*
+!outputs/.gitkeep
+staging/
+tmp/
+GitHub_Release/

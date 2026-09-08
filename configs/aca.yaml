@@ -1,0 +1,71 @@
+dataset:
+  name: ACA
+  root: data/ACA
+  num_classes: 18
+  ignore_index: 255
+  crop_size: 322
+  train_images: 1308
+  validation_images: 145
+  classes:
+    - background
+    - architecture
+    - stairs
+    - window
+    - pillar
+    - tsun-shou
+    - door
+    - stone step
+    - architrave
+    - plaque
+    - dou-gong
+    - ridge
+    - pagoda
+    - stone lion
+    - stone elephant
+    - fence
+    - censer
+    - stone tablet
+
+splits:
+  1_16:
+    labeled: data/splits/aca/train_labeled_0.0625.txt
+    unlabeled: data/splits/aca/train_unlabeled_0.0625.txt
+  1_8:
+    labeled: data/splits/aca/train_labeled_0.125.txt
+    unlabeled: data/splits/aca/train_unlabeled_0.125.txt
+  1_4:
+    labeled: data/splits/aca/train_labeled_0.25.txt
+    unlabeled: data/splits/aca/train_unlabeled_0.25.txt
+  1_2:
+    labeled: data/splits/aca/train_labeled_0.5.txt
+    unlabeled: data/splits/aca/train_unlabeled_0.5.txt
+  validation: data/splits/aca/val.txt
+
+training:
+  epochs: 80
+  batch_size_per_gpu: 8
+  num_gpus: 4
+  learning_rate: 0.000005
+  backbone_lr_multiplier: 40.0
+  pseudo_label_confidence: 0.95
+  model: dpt
+  backbone: dinov2_small
+  lock_backbone: false
+
+style_prior:
+  alpha: 0.6
+  support_lower: 1  # author-confirmed Algorithm 1 tau_l
+  support_upper: 3  # author-confirmed Algorithm 1 tau_h; bounds are inclusive
+
+instance_prior:
+  dominance_threshold: 0.6
+  normalized_expansion: 0.6
+  radius_scale: 100.0  # author-confirmed kappa: R = floor(100 * r)
+
+sam2:
+  model_config: configs/sam2.1/sam2.1_hiera_l.yaml
+  checkpoint: checkpoints/sam2.1_hiera_large.pt
+  points_per_side: 32
+  pred_iou_thresh: 0.50
+  stability_score_thresh: 0.65
+  min_mask_region_area: 512

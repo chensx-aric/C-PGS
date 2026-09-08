@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cpgs"
+version = "0.1.0"
+description = "Causal prior-guided style-aware semi-supervised semantic segmentation"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+authors = [
+  {name = "Sixin Chen", email = "csx2494885979@163.com"},
+  {name = "Sulan Zhang", email = "zhangsl@tyust.edu.cn"},
+  {name = "Xin Wen", email = "2024008@tyust.edu.cn"},
+  {name = "Huiyuan Zhou", email = "bubblezhou1994@163.com"},
+  {name = "Furong Peng", email = "pengfr@sxu.edu.cn"},
+  {name = "Lihua Hu", email = "hlh@tyust.edu.cn"},
+]
+dependencies = [
+  "numpy==1.26.4",
+  "PyYAML==6.0.2",
+  "scipy==1.14.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"

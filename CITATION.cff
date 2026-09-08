@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the C-PGS paper."
+type: software
+title: "C-PGS: Causal Prior-Guided Style-Aware Semi-Supervised Semantic Segmentation for Ancient Chinese Architecture"
+version: 0.1.0
+license: MIT
+authors:
+  - family-names: Chen
+    given-names: Sixin
+    email: csx2494885979@163.com
+  - family-names: Zhang
+    given-names: Sulan
+    email: zhangsl@tyust.edu.cn
+  - family-names: Wen
+    given-names: Xin
+    email: 2024008@tyust.edu.cn
+  - family-names: Zhou
+    given-names: Huiyuan
+    email: bubblezhou1994@163.com
+  - family-names: Peng
+    given-names: Furong
+    email: pengfr@sxu.edu.cn
+  - family-names: Hu
+    given-names: Lihua
+    email: hlh@tyust.edu.cn
