@@ -7,9 +7,9 @@ cd "$SCRIPT_DIR"
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip setuptools wheel
 .venv/bin/python -m pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu121
-.venv/bin/python -m pip install -r requirements-full.txt
+.venv/bin/python -m pip install -r requirements-evaluation.txt
 .venv/bin/python -m pip install -e .
-.venv/bin/python -m pip install -e third_party/sam2
+
 
 echo "Installation complete."
 echo "Tests: .venv/bin/python -m unittest discover -s tests -v"

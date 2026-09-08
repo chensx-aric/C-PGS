@@ -1,4 +1,3 @@
-import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -26,7 +25,7 @@ class DPTHead(nn.Module):
         in_channels, 
         features=256, 
         use_bn=False, 
-        out_channels=[256, 512, 1024, 1024],
+        out_channels=(256, 512, 1024, 1024),
     ):
         super(DPTHead, self).__init__()
         
@@ -115,7 +114,7 @@ class DPT(nn.Module):
         encoder_size='base', 
         nclass=21,
         features=128, 
-        out_channels=[96, 192, 384, 768], 
+        out_channels=(96, 192, 384, 768),
         use_bn=False,
         device='cuda',
     ):
@@ -133,8 +132,6 @@ class DPT(nn.Module):
         
         self.head = DPTHead(nclass, self.backbone.embed_dim, features, use_bn, out_channels=out_channels)
         
-        self.binomial = torch.distributions.binomial.Binomial(probs=0.5)
-        
     def lock_backbone(self):
         for p in self.backbone.parameters():
             p.requires_grad = False
@@ -148,12 +145,14 @@ class DPT(nn.Module):
         
         if comp_drop:
             bs, dim = features[0].shape[0], features[0].shape[-1]
-            
-            dropout_mask1 = self.binomial.sample((bs // 2, dim)).to(self.device) * 2.0
+            if bs % 2:
+                raise ValueError("complementary dropout requires an even batch size")
+            feature_device = features[0].device
+            dropout_mask1 = torch.empty((bs // 2, dim), device=feature_device).bernoulli_(0.5) * 2.0
             dropout_mask2 = 2.0 - dropout_mask1
             dropout_prob = 0.5
             num_kept = int(bs // 2 * (1 - dropout_prob))
-            kept_indexes = torch.randperm(bs // 2)[:num_kept]
+            kept_indexes = torch.randperm(bs // 2, device=feature_device)[:num_kept]
             dropout_mask1[kept_indexes, :] = 1.0
             dropout_mask2[kept_indexes, :] = 1.0
             

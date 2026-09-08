@@ -111,7 +111,9 @@ def _build_model(repository: Path, checkpoint_path: Path, device):
 
     import torch
 
-    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+    # The exact file hash is verified before this call. The historical checkpoint
+    # contains NumPy scalar metadata that is rejected by weights_only=True.
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     if "model_ema" not in checkpoint:
         raise KeyError("checkpoint does not contain the required model_ema state")
     state = checkpoint["model_ema"]

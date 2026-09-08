@@ -2,6 +2,8 @@
 
 Official implementation and reproducibility code for **“C-PGS: Causal Prior-Guided Style-Aware Semi-Supervised Semantic Segmentation for Ancient Chinese Architecture.”**
 
+![C-PGS framework](assets/cpgs_framework.png)
+
 ## Release scope
 
 This is the public, source-only repository. It contains the C-PGS algorithms, the official UniMatch-V2 baseline, the C-PGS UniMatch-V2 integration, ACA split manifests, installation scripts, tests, and the representative model-evaluation entry point. Dataset images, annotations, generated priors, classifier weights, SAM2 checkpoints, and segmentation checkpoints are intentionally not tracked in GitHub. They are supplied separately for authorized evaluation.
@@ -12,10 +14,15 @@ C-PGS-authored code uses the MIT License. Applicable notices for retained third-
 
 ```bash
 bash install.sh
-python -m unittest discover -s tests -v
+.venv/bin/python -m unittest discover -s tests -v
 ```
 
-The second command runs the deterministic CPU tests for the SP and IP implementations.
+The installation script creates `.venv` and installs the pinned dependencies for the representative evaluation. The second command runs deterministic CPU tests for the SP and IP implementations. Full training dependencies are listed separately in `requirements-full.txt`.
+
+Before publishing a release folder, run `python scripts/check_release.py`. It
+checks the single-entry training layout, split counts, required notices, and
+the absence of datasets, weights, caches, logs, private paths, and author
+contact addresses.
 
 The selected model-level GRSI target is the 1/2-labeled UniMatch-V2 + SP checkpoint. Its `model_ema` state was re-evaluated on all 145 validation images and produced mIoU 64.48 with SP only and 65.16 after enabling IP; both exactly match the paper.
 
@@ -27,10 +34,12 @@ checkpoints/unimatch_v2_sp_aca_1_2_best.pth   # representative checkpoint
 ```
 
 ```bash
-python evaluate_representative.py
+.venv/bin/python evaluate_representative.py
 ```
 
 The script verifies the checkpoint SHA-256, evaluates all 145 images once, reports SP and SP+IP separately, and writes `outputs/representative_results.csv` and `.md`. The expected checkpoint SHA-256 is `347db73172344905182250feef1dddd5bd506bb516b8fdc716274425a88741fc`.
+
+Detailed GRSI reviewer instructions, including the confidential asset overlay, are provided in `docs/GRSI_REPRODUCTION.md`.
 
 For a lightweight developer installation:
 
@@ -48,9 +57,10 @@ C-PGS/
 ├── data/splits/aca/                  # 82/164/327/654 labeled splits + validation
 ├── experiments/
 │   ├── baseline/unimatch_v2_official # official baseline from the supplied ZIP
-│   └── integrations/unimatch_v2      # C-PGS-modified representative integration
+│   └── integrations/unimatch_v2      # runnable, parameterized C-PGS integration
 ├── third_party/sam2/                 # vendored SAM2 source; checkpoints excluded
 ├── scripts/                          # reproducibility utilities
+├── assets/                           # full framework image + 250x250 GRSI thumbnail
 ├── docs/                             # paper results and paper-to-code mapping
 └── tests/                            # CPU-only deterministic tests
 ```
@@ -81,7 +91,11 @@ The dataset is intentionally excluded from GitHub. For authorized evaluation, pl
 
 ## Source-of-truth policy
 
-`src/cpgs` is the clean paper-facing implementation of Algorithms 1 and 2. `src/cpgs/experiment_ip.py` separately preserves the additional safeguards used by the verified representative evaluation. The two retained directories under `experiments` are the official UniMatch-V2 baseline and the modified representative experiment snapshot. The snapshot preserves experiment history; use the root-level evaluation entry point for portable reproduction.
+`src/cpgs` is the clean paper-facing implementation of Algorithms 1 and 2. `src/cpgs/experiment_ip.py` separately preserves the additional safeguards used by the verified representative evaluation. The two retained directories under `experiments` are the official UniMatch-V2 baseline and the runnable C-PGS integration. The integration uses one `train.py` entry point for all four labeled ratios; use the root-level evaluation entry point for the no-argument representative check.
+
+## Training
+
+The representative result uses the provided pretrained checkpoint because the paper training run takes substantially longer than the GRSI evaluation window. The complete training protocol, data splits, hyperparameters, and unified UniMatch-V2 command are documented in `docs/TRAINING.md`.
 
 ## Large files
 

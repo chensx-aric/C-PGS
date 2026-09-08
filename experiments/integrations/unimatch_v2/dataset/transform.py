@@ -1,143 +1,137 @@
+"""Image/mask augmentations shared by ACA training datasets."""
+
+from __future__ import annotations
+
 import random
 
 import numpy as np
-from PIL import Image, ImageOps, ImageFilter
+from PIL import Image, ImageFilter, ImageOps
 import torch
 from torchvision import transforms
 
 
-# def crop(img, mask, size, ignore_value=255):
-#     w, h = img.size
-#     padw = size - w if w < size else 0
-#     padh = size - h if h < size else 0
-#     img = ImageOps.expand(img, border=(0, 0, padw, padh), fill=0)
-#     mask = ImageOps.expand(mask, border=(0, 0, padw, padh), fill=ignore_value)
-#
-#     w, h = img.size
-#     x = random.randint(0, w - size)
-#     y = random.randint(0, h - size)
-#     img = img.crop((x, y, x + size, y + size))
-#     mask = mask.crop((x, y, x + size, y + size))
-#
-#     return img, mask
-#
-#
-# def hflip(img, mask, p=0.5):
-#     if random.random() < p:
-#         img = img.transpose(Image.FLIP_LEFT_RIGHT)
-#         mask = mask.transpose(Image.FLIP_LEFT_RIGHT)
-#     return img, mask
-
-
-def normalize(img, mask=None):
-    img = transforms.Compose([
+_NORMALIZE = transforms.Compose(
+    [
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    ])(img)
-    if mask is not None:
-        mask = torch.from_numpy(np.array(mask)).long()
-        return img, mask
-    return img
+    ]
+)
 
 
-# def resize(img, mask, ratio_range):
-#     w, h = img.size
-#     long_side = random.randint(int(max(h, w) * ratio_range[0]), int(max(h, w) * ratio_range[1]))
-#
-#     if h > w:
-#         oh = long_side
-#         ow = int(1.0 * w * long_side / h + 0.5)
-#     else:
-#         ow = long_side
-#         oh = int(1.0 * h * long_side / w + 0.5)
-#
-#     img = img.resize((ow, oh), Image.BILINEAR)
-#     mask = mask.resize((ow, oh), Image.NEAREST)
-#     return img, mask
-def resize(img, mask, instance_mask=None, ratio_range=(0.5, 2.0)):
-    """对图像、语义掩码、实例掩码同步缩放"""
-    w, h = img.size
-    long_side = random.randint(
-        int(max(h, w) * ratio_range[0]),
-        int(max(h, w) * ratio_range[1])
-    )
+def normalize(image: Image.Image, mask: Image.Image | None = None):
+    image_tensor = _NORMALIZE(image)
+    if mask is None:
+        return image_tensor
+    mask_tensor = torch.from_numpy(np.asarray(mask).copy()).long()
+    return image_tensor, mask_tensor
 
-    if h > w:
-        oh = long_side
-        ow = int(1.0 * w * long_side / h + 0.5)
+
+def resize(
+    image: Image.Image,
+    mask: Image.Image,
+    instance_mask: Image.Image | None = None,
+    ratio_range: tuple[float, float] = (0.5, 2.0),
+):
+    """Randomly resize all supplied views with identical geometry."""
+
+    lower, upper = ratio_range
+    if not 0 < lower <= upper:
+        raise ValueError("ratio_range must satisfy 0 < lower <= upper")
+    width, height = image.size
+    long_side = random.randint(int(max(height, width) * lower), int(max(height, width) * upper))
+    if height > width:
+        out_height = long_side
+        out_width = int(width * long_side / height + 0.5)
     else:
-        ow = long_side
-        oh = int(1.0 * h * long_side / w + 0.5)
+        out_width = long_side
+        out_height = int(height * long_side / width + 0.5)
+    size = (max(1, out_width), max(1, out_height))
+    image = image.resize(size, Image.Resampling.BILINEAR)
+    mask = mask.resize(size, Image.Resampling.NEAREST)
+    if instance_mask is None:
+        return image, mask
+    return image, mask, instance_mask.resize(size, Image.Resampling.NEAREST)
 
-    img = img.resize((ow, oh), Image.BILINEAR)
-    mask = mask.resize((ow, oh), Image.NEAREST)
 
+def crop(
+    image: Image.Image,
+    mask: Image.Image,
+    size: int,
+    ignore_value: int = 255,
+    instance_mask: Image.Image | None = None,
+):
+    """Pad if necessary, then take one aligned random square crop."""
+
+    if size <= 0:
+        raise ValueError("crop size must be positive")
+    width, height = image.size
+    pad_width = max(0, size - width)
+    pad_height = max(0, size - height)
+    image = ImageOps.expand(image, border=(0, 0, pad_width, pad_height), fill=0)
+    mask = ImageOps.expand(mask, border=(0, 0, pad_width, pad_height), fill=ignore_value)
     if instance_mask is not None:
-        instance_mask = instance_mask.resize((ow, oh), Image.NEAREST)
-        return img, mask, instance_mask
-    else:
-        return img, mask
+        instance_mask = ImageOps.expand(instance_mask, border=(0, 0, pad_width, pad_height), fill=0)
+
+    width, height = image.size
+    left = random.randint(0, width - size)
+    top = random.randint(0, height - size)
+    box = (left, top, left + size, top + size)
+    image = image.crop(box)
+    mask = mask.crop(box)
+    if instance_mask is None:
+        return image, mask
+    return image, mask, instance_mask.crop(box)
 
 
-def crop(img, mask, size, ignore_value=255, instance_mask=None):
-    """随机裁剪，保证三者对齐"""
-    w, h = img.size
-    padw = size - w if w < size else 0
-    padh = size - h if h < size else 0
+def hflip(
+    image: Image.Image,
+    mask: Image.Image,
+    p: float = 0.5,
+    instance_mask: Image.Image | None = None,
+):
+    """Horizontally flip all supplied views with probability ``p``."""
 
-    img = ImageOps.expand(img, border=(0, 0, padw, padh), fill=0)
-    mask = ImageOps.expand(mask, border=(0, 0, padw, padh), fill=ignore_value)
-    if instance_mask is not None:
-        instance_mask = ImageOps.expand(instance_mask, border=(0, 0, padw, padh), fill=0)
-
-    w, h = img.size
-    x = random.randint(0, w - size)
-    y = random.randint(0, h - size)
-
-    img = img.crop((x, y, x + size, y + size))
-    mask = mask.crop((x, y, x + size, y + size))
-    if instance_mask is not None:
-        instance_mask = instance_mask.crop((x, y, x + size, y + size))
-        return img, mask, instance_mask
-    else:
-        return img, mask
-
-
-def hflip(img, mask, p=0.5, instance_mask=None):
-    """随机水平翻转，保持三者对齐"""
+    if not 0 <= p <= 1:
+        raise ValueError("p must be in [0, 1]")
     if random.random() < p:
-        img = img.transpose(Image.FLIP_LEFT_RIGHT)
-        mask = mask.transpose(Image.FLIP_LEFT_RIGHT)
+        image = image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+        mask = mask.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
         if instance_mask is not None:
-            instance_mask = instance_mask.transpose(Image.FLIP_LEFT_RIGHT)
-    if instance_mask is not None:
-        return img, mask, instance_mask
-    else:
-        return img, mask
+            instance_mask = instance_mask.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    if instance_mask is None:
+        return image, mask
+    return image, mask, instance_mask
 
-def blur(img, p=0.5):
+
+def blur(image: Image.Image, p: float = 0.5) -> Image.Image:
+    if not 0 <= p <= 1:
+        raise ValueError("p must be in [0, 1]")
     if random.random() < p:
-        sigma = np.random.uniform(0.1, 2.0)
-        img = img.filter(ImageFilter.GaussianBlur(radius=sigma))
-    return img
+        image = image.filter(ImageFilter.GaussianBlur(radius=float(np.random.uniform(0.1, 2.0))))
+    return image
 
 
-def obtain_cutmix_box(img_size, p=0.5, size_min=0.02, size_max=0.4, ratio_1=0.3, ratio_2=1/0.3):
-    mask = torch.zeros(img_size, img_size)
+def obtain_cutmix_box(
+    image_size: int,
+    p: float = 0.5,
+    size_min: float = 0.02,
+    size_max: float = 0.4,
+    ratio_min: float = 0.3,
+    ratio_max: float = 1 / 0.3,
+) -> torch.Tensor:
+    """Sample the binary CutMix rectangle used by UniMatch-V2."""
+
+    mask = torch.zeros((image_size, image_size), dtype=torch.float32)
     if random.random() > p:
         return mask
-
-    size = np.random.uniform(size_min, size_max) * img_size * img_size
-    while True:
-        ratio = np.random.uniform(ratio_1, ratio_2)
-        cutmix_w = int(np.sqrt(size / ratio))
-        cutmix_h = int(np.sqrt(size * ratio))
-        x = np.random.randint(0, img_size)
-        y = np.random.randint(0, img_size)
-
-        if x + cutmix_w <= img_size and y + cutmix_h <= img_size:
-            break
-
-    mask[y:y + cutmix_h, x:x + cutmix_w] = 1
-
+    area = float(np.random.uniform(size_min, size_max)) * image_size * image_size
+    for _ in range(100):
+        ratio = float(np.random.uniform(ratio_min, ratio_max))
+        width = int(np.sqrt(area / ratio))
+        height = int(np.sqrt(area * ratio))
+        left = int(np.random.randint(0, image_size))
+        top = int(np.random.randint(0, image_size))
+        if left + width <= image_size and top + height <= image_size:
+            mask[top : top + height, left : left + width] = 1
+            return mask
     return mask

@@ -2,14 +2,14 @@
 
 ## Canonical algorithms
 
-| Paper component | Clean implementation | Historical source evidence |
+| Paper component | Clean implementation | Runnable location |
 |---|---|---|
-| Algorithm 1, hypergraph style prior | `src/cpgs/style_prior.py` | ratio-specific C-PGS scripts under `experiments/integrations/unimatch_v2` |
+| Algorithm 1, hypergraph style prior | `src/cpgs/style_prior.py` | `experiments/integrations/unimatch_v2/train.py` |
 | Equation 16, logit modulation | `inject_style_prior_numpy` / `inject_style_prior_torch` | C-PGS UniMatch-V2 training scripts |
-| Algorithm 2, instance refinement | `src/cpgs/instance_prior.py` | `experiments/integrations/unimatch_v2/supervised.py` |
+| Algorithm 2, instance refinement | `src/cpgs/instance_prior.py` | `scripts/evaluate_representative.py` |
 | SAM2 candidate masks | `src/cpgs/sam2_masks.py` | vendored source under `third_party/sam2` |
 
-The clean implementation follows the accepted manuscript. Legacy code contains additional heuristics (area thresholds, IoU tests, class-specific forcing, fixed pixel expansion, and experimental branches) that are not part of the published pseudocode.
+The clean implementation follows the accepted manuscript. Inactive historical branches (area thresholds, IoU tests, class-specific forcing, and alternative prior schedules) were removed from the public integration so the runnable code has one unambiguous path.
 
 ## Table 2 method roles
 
@@ -23,5 +23,5 @@ For the GRSI package, only the official UniMatch-V2 ZIP and the server's modifie
 
 1. The author confirmed the inclusive Algorithm 1 support bounds are `tau_l=1` and `tau_h=3`.
 2. The author confirmed Algorithm 2 uses `kappa=100`: `R=floor(100r)`. Thus the default `r=0.6` corresponds to the legacy `expand_pixels=60`.
-3. The representative SP run is now identified as `1_2_New/best.pth` with the `model_ema` key; it re-evaluates to 64.48 without IP and 65.16 with IP. Multiple classifier files and `_nor` variants remain relevant only to non-representative historical runs.
+3. The representative SP run is identified by the archived training source as `1_2_New/best.pth`; the public reviewer package gives it the stable name `checkpoints/unimatch_v2_sp_aca_1_2_best.pth`. Its `model_ema` state re-evaluates to 64.48 without IP and 65.16 with IP. Obsolete classifier files, ratio-specific source copies, and `_nor` variants are intentionally excluded from the public repository.
 4. The public no-argument evaluator is `evaluate_representative.py`. It loads the `model_ema` state and reports SP-only and SP+IP metrics separately, avoiding the historical evaluator's unconditional IP call.

@@ -1,11 +1,22 @@
-# Modification and provenance notice
+# Modifications to UniMatch-V2
 
-This directory is an experimental snapshot derived from the official UniMatch-V2 implementation by Lihe Yang, Zhen Zhao, and Hengshuang Zhao:
+This directory derives its DPT/DINOv2 model code and UniMatch-V2 training
+procedure from the official UniMatch-V2 source supplied by the authors. The
+upstream license is retained in `LICENSE`.
 
-- Upstream repository: <https://github.com/LiheYoung/UniMatch-V2>
-- Upstream license: MIT; the original license text is retained in `LICENSE`.
-- Local provenance: the authors' archived UniMatch-V2 experiment workspace.
+The C-PGS release makes the following paper-specific changes:
 
-The C-PGS authors adapted the code for the 18-class ACA dataset and added experiment paths for category-level style-prior injection and instance-level refinement. The snapshot also contains ratio-specific scripts and historical evaluation branches used during the study. It should therefore be read together with the clean paper-facing implementations in `src/cpgs`, the portable protocol in `configs/aca.yaml`, and `docs/EXPERIMENT_MAPPING.md`.
+- adds the 18-class ACA configuration and split manifests;
+- injects the category-level style prior into teacher logits using Equation 16;
+- accepts all four labeled ratios through one `--split` argument;
+- loads split-aligned SP caches through an explicit `--prior-cache` path;
+- supports single-GPU and `torchrun` execution without hard-coded CUDA indices;
+- uses portable, unwrapped checkpoint keys and validates split compatibility
+  before automatic resume;
+- includes an asset-validation mode and an SP-only checkpoint-evaluation mode;
+- removes inactive experimental branches, visualization snippets, ratio-specific
+  script copies, and the unused auxiliary classifier.
 
-Upstream UniMatch-V2 portions remain under the upstream MIT License. C-PGS-authored additions are covered by the repository's root MIT License. This notice documents provenance; it does not change either license.
+Instance-prior (IP) post-processing is implemented once in `src/cpgs` and is
+exercised by the repository-level `evaluate_representative.py`; it is not a
+separate training model.

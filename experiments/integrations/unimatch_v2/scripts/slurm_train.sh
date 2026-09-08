@@ -1,25 +1,30 @@
-#!/bin/bash
-job='pascal_unimatch_v2_dinov2_small_366'
+#!/usr/bin/env bash
+# Example: sbatch --export=ALL,SPLIT=1/2,PRIOR_CACHE=/path/cache.pt,PRETRAINED=/path/dinov2_small.pth scripts/slurm_train.sh
+#SBATCH --job-name=cpgs-unimatch-v2
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --gres=gpu:4
+#SBATCH --cpus-per-task=16
+#SBATCH --time=48:00:00
 
-# modify these augments if you want to try other datasets, splits or methods
-# dataset: ['pascal', 'cityscapes', 'ade20k', 'coco']
-# method: ['unimatch_v2', 'fixmatch', 'supervised']
-# exp: just for specifying the 'save_path'
-# split: ['92', '1_16', ...]. Please check directory './splits/$dataset' for concrete splits
-dataset='pascal'
-method='unimatch_v2'
-exp='dinov2_small'
-split='366'
+set -euo pipefail
 
-config=configs/${dataset}.yaml
-labeled_id_path=splits/$dataset/$split/labeled.txt
-unlabeled_id_path=splits/$dataset/$split/unlabeled.txt
-save_path=exp/$dataset/$method/$exp/$split
+: "${SPLIT:?Set SPLIT to 1/16, 1/8, 1/4, or 1/2}"
+: "${PRIOR_CACHE:?Set PRIOR_CACHE to the split-aligned style-prior cache}"
+: "${PRETRAINED:?Set PRETRAINED to the DINOv2-S initialization checkpoint}"
 
-mkdir -p $save_path
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INTEGRATION_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPOSITORY_ROOT="$(cd "$INTEGRATION_DIR/../../.." && pwd)"
+NUM_GPUS="${NUM_GPUS:-4}"
+DATA_ROOT="${DATA_ROOT:-$REPOSITORY_ROOT/data/ACA}"
+OUTPUT_DIR="${OUTPUT_DIR:-$REPOSITORY_ROOT/outputs/unimatch_v2/${SPLIT//\//_}}"
 
-srun --mpi=pmi2 -p $3 -n $1 --gres=gpu:$1 --ntasks-per-node=$1 --job-name=$job
-    --open-mode=append -o $save_path/out.log --quotatype=reserved \
-    python3 -u $method.py \
-    --config=$config --labeled-id-path $labeled_id_path --unlabeled-id-path $unlabeled_id_path \
-    --save-path $save_path --port $2
+torchrun --standalone --nproc-per-node "$NUM_GPUS" \
+  "$INTEGRATION_DIR/train.py" \
+  --config "$INTEGRATION_DIR/configs/AC.yaml" \
+  --split "$SPLIT" \
+  --data-root "$DATA_ROOT" \
+  --prior-cache "$PRIOR_CACHE" \
+  --pretrained "$PRETRAINED" \
+  --output-dir "$OUTPUT_DIR"

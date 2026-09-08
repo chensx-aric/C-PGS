@@ -1,6 +1,7 @@
 # arguments for dataset
 dataset: AC
-data_root: Your/COCO/Path
+data_root: data/ACA
+split_root: data/splits/aca
 nclass: 18
 crop_size: 322
 
@@ -14,6 +15,7 @@ criterion:
   kwargs:
     ignore_index: 255
 conf_thresh: 0.95
+style_prior_alpha: 0.6
 
 # arguments for model
 model: dpt

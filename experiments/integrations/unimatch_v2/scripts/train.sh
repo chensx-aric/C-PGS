@@ -1,26 +1,34 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# modify these augments if you want to try other datasets, splits or methods
-# dataset: ['pascal', 'cityscapes', 'ade20k', 'coco']
-# method: ['unimatch_v2', 'fixmatch', 'supervised']
-# exp: just for specifying the 'save_path'
-# split: ['92', '1_16', ...]. Please check directory './splits/$dataset' for concrete splits
-dataset='pascal'
-method='unimatch_v2'
-exp='dinov2_small'
-split='366'
+if [[ $# -lt 3 || $# -gt 6 ]]; then
+  echo "Usage: $0 <1/16|1/8|1/4|1/2> <prior-cache.pt> <dinov2-small.pth> [num-gpus] [data-root] [output-dir]" >&2
+  exit 2
+fi
 
-config=configs/${dataset}.yaml
-labeled_id_path=splits/$dataset/$split/labeled.txt
-unlabeled_id_path=splits/$dataset/$split/unlabeled.txt
-save_path=exp/$dataset/$method/$exp/$split
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INTEGRATION_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPOSITORY_ROOT="$(cd "$INTEGRATION_DIR/../../.." && pwd)"
 
-mkdir -p $save_path
+SPLIT="$1"
+PRIOR_CACHE="$2"
+PRETRAINED="$3"
+NUM_GPUS="${4:-1}"
+DATA_ROOT="${5:-$REPOSITORY_ROOT/data/ACA}"
+OUTPUT_DIR="${6:-$REPOSITORY_ROOT/outputs/unimatch_v2/${SPLIT//\//_}}"
 
-python -m torch.distributed.launch \
-    --nproc_per_node=$1 \
-    --master_addr=localhost \
-    --master_port=$2 \
-    $method.py \
-    --config=$config --labeled-id-path $labeled_id_path --unlabeled-id-path $unlabeled_id_path \
-    --save-path $save_path --port $2 2>&1 | tee $save_path/out.log
+COMMON_ARGS=(
+  "$INTEGRATION_DIR/train.py"
+  --config "$INTEGRATION_DIR/configs/AC.yaml"
+  --split "$SPLIT"
+  --data-root "$DATA_ROOT"
+  --prior-cache "$PRIOR_CACHE"
+  --pretrained "$PRETRAINED"
+  --output-dir "$OUTPUT_DIR"
+)
+
+if [[ "$NUM_GPUS" -gt 1 ]]; then
+  torchrun --standalone --nproc-per-node "$NUM_GPUS" "${COMMON_ARGS[@]}"
+else
+  python "${COMMON_ARGS[@]}"
+fi
