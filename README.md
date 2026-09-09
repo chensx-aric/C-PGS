@@ -2,11 +2,14 @@
 
 Official implementation and reproducibility code for **“C-PGS: Causal Prior-Guided Style-Aware Semi-Supervised Semantic Segmentation for Ancient Chinese Architecture.”**
 
+Accepted author manuscript (pending formal publication):
+[PDF](paper/C-PGS_accepted_manuscript.pdf).
+
 ![C-PGS framework](assets/cpgs_framework.png)
 
 ## Release scope
 
-This is the public, source-only repository. It contains the C-PGS algorithms, the official UniMatch-V2 baseline, the C-PGS UniMatch-V2 integration, ACA split manifests, installation scripts, tests, and the representative model-evaluation entry point. Dataset images, annotations, generated priors, classifier weights, SAM2 checkpoints, and segmentation checkpoints are intentionally not tracked in GitHub. They are supplied separately for authorized evaluation.
+This public repository contains the C-PGS algorithms, the official UniMatch-V2 baseline, the C-PGS UniMatch-V2 integration, ACA split manifests, installation scripts, tests, the accepted author manuscript, and the representative model-evaluation entry point. Dataset images, annotations, generated priors, classifier weights, SAM2 checkpoints, and segmentation checkpoints are intentionally not tracked in GitHub. They are supplied separately for authorized evaluation.
 
 C-PGS-authored code uses the MIT License. Applicable notices for retained third-party source are included in `THIRD_PARTY_NOTICES.md`.
 

@@ -1,0 +1,8 @@
+TITLE
+C-PGS: Causal Prior-Guided Style-Aware Semi-Supervised Semantic Segmentation for Ancient Chinese Architecture
+
+AUTHORS
+Sixin Chen; Sulan Zhang; Xin Wen; Huiyuan Zhou; Furong Peng; Lihua Hu
+
+OPERATING SYSTEM
+Ubuntu 22.04.1 LTS or later (64-bit)
